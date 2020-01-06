@@ -2,11 +2,11 @@ import numpy as np
 from keras.callbacks import EarlyStopping, TensorBoard
 from keras.models import Model
 
-from .data_prep import SentimentData
+from data_prep import SentimentData
 
 
 def train(model: Model, data: SentimentData, name: str):
-    cbs = get_callbacks("./" + name)
+    cbs = get_callbacks("./logs/" + name)
 
     metrics = {}
 
@@ -22,6 +22,7 @@ def train(model: Model, data: SentimentData, name: str):
     )
 
     metrics["en"] = model.evaluate(data.test_x, data.test_y)
+    print(metrics)
 
     print("Training on Spanish")
     model.fit(
@@ -35,11 +36,12 @@ def train(model: Model, data: SentimentData, name: str):
     )
 
     metrics["es"] = model.evaluate(data.test_x, data.test_y)
+    print(metrics)
 
     print("Training on concat")
     model.fit(
-        x=np.concatenate(data.en_x, data.es_x),
-        y=np.concatenate(data.en_y, data.es_y),
+        x=np.concatenate([data.en_x, data.es_x]),
+        y=np.concatenate([data.en_y, data.es_y]),
         validation_data=(data.cm_x, data.cm_y),
         epochs=90,
         initial_epoch=60,
@@ -48,6 +50,7 @@ def train(model: Model, data: SentimentData, name: str):
     )
 
     metrics["both"] = model.evaluate(data.test_x, data.test_y)
+    print(metrics)
 
     print("Training on cm")
     model.fit(
@@ -60,8 +63,10 @@ def train(model: Model, data: SentimentData, name: str):
         callbacks=cbs,
     )
     metrics["cm"] = model.evaluate(data.test_x, data.test_y)
+    print(metrics)
 
     return model, metrics
+
 
 def get_callbacks(log_dir):
     tb = TensorBoard(log_dir=log_dir, histogram_freq=5, write_graph=False, write_images=False, update_freq='batch')

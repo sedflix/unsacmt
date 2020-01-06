@@ -1,5 +1,3 @@
-import pickle
-
 from keras.utils import to_categorical
 
 
@@ -56,3 +54,101 @@ def read_data(train_path: str, test_path: str):
            es_x, to_categorical(es_y, num_classes=3), \
            cm_x, to_categorical(cm_y, num_classes=3), \
            test_x, to_categorical(test_y, num_classes=3)
+
+
+def f1(y_true, y_pred):
+    def recall(y_true, y_pred):
+        """Recall metric.
+        Only computes a batch-wise average of recall.
+        Computes the recall, a metric for multi-label classification of
+        how many relevant items are selected.
+        """
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        recall = true_positives / (possible_positives + K.epsilon())
+        return recall
+
+    def precision(y_true, y_pred):
+        """Precision metric.
+        Only computes a batch-wise average of precision.
+        Computes the precision, a metric for multi-label classification of
+        how many selected items are relevant.
+        """
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        return precision
+
+    precision = precision(y_true, y_pred)
+    recall = recall(y_true, y_pred)
+    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+
+
+def get_class_weight(y):
+    """
+    Used from: https://stackoverflow.com/a/50695814
+    TODO: check validity and 'balanced' option
+    :param y: A list of one-hot-encoding labels [[0,0,1,0],[0,0,0,1],..]
+    :return: class-weights to be used by keras model.fit(.. class_weight="") -> {0:0.52134, 1:1.adas..}
+    """
+    y_integers = np.argmax(y, axis=1)
+    class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
+    d_class_weights = dict(enumerate(class_weights))
+    return d_class_weights
+
+
+from tensorflow.keras import backend as K
+
+
+def f1(y_true, y_pred):
+    def recall(y_true, y_pred):
+        """Recall metric.
+        Only computes a batch-wise average of recall.
+        Computes the recall, a metric for multi-label classification of
+        how many relevant items are selected.
+        """
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        recall = true_positives / (possible_positives + K.epsilon())
+        return recall
+
+    def precision(y_true, y_pred):
+        """Precision metric.
+        Only computes a batch-wise average of precision.
+        Computes the precision, a metric for multi-label classification of
+        how many selected items are relevant.
+        """
+        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+        precision = true_positives / (predicted_positives + K.epsilon())
+        return precision
+
+    precision = precision(y_true, y_pred)
+    recall = recall(y_true, y_pred)
+    return 2 * ((precision * recall) / (precision + recall + K.epsilon()))
+
+
+from sklearn.utils.class_weight import compute_class_weight
+
+
+def get_class_weight(y):
+    """
+    Used from: https://stackoverflow.com/a/50695814
+    TODO: check validity and 'balanced' option
+    :param y: A list of one-hot-encoding labels [[0,0,1,0],[0,0,0,1],..]
+    :return: class-weights to be used by keras model.fit(.. class_weight="") -> {0:0.52134, 1:1.adas..}
+    """
+    y_integers = np.argmax(y, axis=1)
+    class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
+    d_class_weights = dict(enumerate(class_weights))
+    return d_class_weights
+
+
+from keras import backend as K
+from keras import losses
+
+
+def loss_ordinal(y_true, y_pred):
+    weights = K.cast(K.abs(K.argmax(y_true, axis=1) - K.argmax(y_pred, axis=1)) / (K.int_shape(y_pred)[1] - 1),
+                     dtype='float32')
+    return (1.0 + weights) * losses.categorical_crossentropy(y_true, y_pred)

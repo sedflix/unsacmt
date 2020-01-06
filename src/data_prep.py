@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from bpemb import BPEmb
 from laserembeddings import Laser
+from nltk.stem import SnowballStemmer
 from utills import read_data
 
 
@@ -21,9 +22,27 @@ class SentimentData(object):
         self.test_x = test_x
         self.test_y = test_y
 
+    def apply_multibpe(self, vs=1000000, dim=300):
+        self.en_x, self.es_x, self.cm_x, self.test_x = prep_multibpe(self.en_x, self.es_x, self.cm_x, self.test_x,
+                                                                     vs, dim)
+
+    def apply_fasttext(self, path):
+        self.en_x, self.es_x, self.cm_x, self.test_x = prep_fasttext(self.en_x, self.es_x, self.cm_x, self.test_x,
+                                                                     path)
+
+    def apply_xlm(self):
+        self.en_x, self.es_x, self.cm_x, self.test_x = prep_xlm(self.en_x, self.es_x, self.cm_x, self.test_x)
+
+    def apply_laser(self):
+        self.en_x, self.es_x, self.cm_x, self.test_x = prep_laser(self.en_x, self.es_x, self.cm_x, self.test_x)
+
+    def apply_muse(self, src, tgt, max):
+        self.en_x, self.es_x, self.cm_x, self.test_x = prep_muse(self.en_x, self.es_x, self.cm_x, self.test_x,
+                                                                 src, tgt, max)
+
     @staticmethod
     def read_raw(train_path: str, test_path: str):
-        return SentimentData(read_data(train_path, test_path))
+        return SentimentData(*read_data(train_path, test_path))
 
     @staticmethod
     def read_pickle(path: str):
@@ -141,8 +160,37 @@ def get_fasttext_embeddings(x: List[str], ft=None, path: str = None):
     return embeddings
 
 
-def prep_muse():
-    pass
+def prep_muse(en_x: List[str], es_x: List[str], cm_x: List[str], test_x: List[str], src_path, tgt_path, nmax):
+    embedding_matrix, id2word, word2id, common_words = get_muse(src_path, tgt_path, nmax)
+    en_x = get_muse_embeddings(en_x, embedding_matrix, word2id)
+    es_x = get_muse_embeddings(es_x, embedding_matrix, word2id)
+    cm_x = get_muse_embeddings(cm_x, embedding_matrix, word2id)
+    test_x = get_muse_embeddings(test_x, embedding_matrix, word2id)
+
+    return en_x, es_x, cm_x, test_x
+
+
+def get_muse_embeddings(x: List[str], embedding_matrix, word2id):
+    stemmer = SnowballStemmer("english")
+
+    embeddings = []
+    for sentence in x:
+        representation = []
+        words = sentence.split(' ')
+        for word in words:
+            word = word.strip().lower()  # lower the word
+            if word in word2id:
+                representation.append(embedding_matrix[word2id[word]])
+            else:
+                stem = stemmer.stem(word)  # find stem
+                if stem in word2id:
+                    representation.append(embedding_matrix[word2id[stem]])
+
+        embeddings.append(representation)
+
+    embeddings = pad(embeddings, [0 for _ in range(300)], 20)
+
+    return embeddings
 
 
 def pad(x, pad_value, seq_len=26):

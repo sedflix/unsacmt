@@ -97,7 +97,7 @@ class AttentionWithContext(Layer):
             uit += self.b
 
         uit = K.tanh(uit)
-        ait = dot_product(uit, self.u)
+        ait = K.dot(uit, self.u)
 
         a = K.exp(ait)
 
