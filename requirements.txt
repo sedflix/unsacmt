@@ -1,5 +1,5 @@
-torch
 laserembeddings
+torch
 keras
 tensorflow-gpu
 nltk

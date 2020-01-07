@@ -1,4 +1,4 @@
-from keras.layers import Bidirectional, LSTM, Dense
+from keras.layers import Bidirectional, LSTM, Dense, Input
 from keras.models import Sequential
 from utills import f1
 
@@ -35,3 +35,28 @@ def get_dense_model():
                   metrics=['accuracy', f1])
 
     return model
+
+
+ft = Input(shape=(None, 32, 100))
+multi = Input(shape=(None, 32, 300))
+laser = Input(shape=(None, 1024))
+
+ft = Bidirectional(
+    LSTM(
+        units=50,
+        dropout=0.3,
+        recurrent_dropout=0.3,
+        # return_sequences=True,
+    )(ft)
+)
+
+multi = Bidirectional(
+    LSTM(
+        units=50,
+        dropout=0.3,
+        recurrent_dropout=0.3,
+        # return_sequences=True,
+    )(multi)
+)
+
+

@@ -46,7 +46,7 @@ class SentimentData(object):
 
     @staticmethod
     def read_pickle(path: str):
-        with open(path) as f:
+        with open(path, "rb") as f:
             object = pickle.load(f)
         return object
 
@@ -58,7 +58,7 @@ class SentimentData(object):
 
         Returns:
         """
-        with open(path, 'w') as f:
+        with open(path, 'wb') as f:
             pickle.dump(self, f)
 
 
@@ -91,6 +91,7 @@ def get_laser_embeddings(x: List[str], lang: str, laser=None) -> np.ndarray:
 
 def prep_xlm(en_x: List[str], es_x: List[str], cm_x: List[str], test_x: List[str], return_all_hiddens: bool = False):
     xlmr = torch.hub.load('pytorch/fairseq', 'xlmr.large')
+    xlmr.cuda()
     en_x = get_xlm_embeddings(en_x, xlmr, return_all_hiddens)
     es_x = get_xlm_embeddings(es_x, xlmr, return_all_hiddens)
     cm_x = get_xlm_embeddings(cm_x, xlmr, return_all_hiddens)
@@ -106,8 +107,11 @@ def get_xlm_embeddings(x: List[str], xlmr=None, return_all_hiddens: bool = False
     embeddings = []
     for sentence in x:
         tokens = xlmr.encode(sentence)
-        features = xlmr.extract_features(tokens, return_all_hiddens)
-        embeddings.append(features.detach().numpy())
+        tokens.cuda()
+        with torch.no_grad():
+            features = xlmr.extract_features(tokens, return_all_hiddens)
+        embeddings.append(features.detach().cpu().numpy())
+    embeddings = pad_xlm(embeddings, [0 for _ in range(1024)], 32)
     return embeddings
 
 
@@ -192,6 +196,17 @@ def get_muse_embeddings(x: List[str], embedding_matrix, word2id):
 
     return embeddings
 
+
+def pad_xlm(x, pad_value, seq_len=26):
+    for i in range(len(x)):
+        x[i] = x[i].reshape((x[i].shape[1],-1))
+        if len(x[i]) > seq_len:
+            x[i] = x[i][:seq_len]
+        else:
+            x[i] = list(x[i])
+            while len(x[i]) < seq_len:
+                x[i].append(pad_value)
+    return np.array(x)
 
 def pad(x, pad_value, seq_len=26):
     for i in range(len(x)):
