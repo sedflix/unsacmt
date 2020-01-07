@@ -34,8 +34,12 @@ The aligned MUSE embedding is provided [here]().   # TODO
 ## Files Description
 
 - `notebooks/archive/*.ipynb`: old notebooks with many more experiments than mentioned in the paper.
-- `notebooks/Results.ipynb`: 
-- `src`: 
+- `notebooks/Results.ipynb`: a notebook with all the experiments
+- `src/utills.py`: code for reading raw data and f1 score
+- `src/trainer.py`: code for following training curriculum given the model and data
+- `src/models.py`: code for simple neural network models used by use
+- `src/data_prep.py`: code for applying different kinds of embeddings on sentiment analysis dataset
+
 
  
 
