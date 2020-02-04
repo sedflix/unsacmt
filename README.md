@@ -41,5 +41,15 @@ The aligned MUSE embedding is provided [here]().   # TODO
 - `src/data_prep.py`: code for applying different kinds of embeddings on sentiment analysis dataset
 
 
- 
+# Citation 
 
+```
+@misc{yadav2020unsupervised,
+    title={Unsupervised Sentiment Analysis for Code-mixed Data},
+    author={Siddharth Yadav and Tanmoy Chakraborty},
+    year={2020},
+    eprint={2001.11384},
+    archivePrefix={arXiv},
+    primaryClass={cs.CL}
+}
+```
