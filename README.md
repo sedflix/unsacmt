@@ -1,7 +1,7 @@
 # Unsupervised Sentiment Analysis for Code-mixed Data
 
 We use embeddings techniques like MUSE, LASER, XLM, MutltiBPEemd, fasttext 
-to efficiently transfer knowledge from monolingual test to code-mix text for sentiment analysis of code-mixed text.
+to efficiently transfer knowledge from monolingual test to code-mix text for sentiment analysis of code-mixed text. More information about the methods tried here can be found in [here](https://arxiv.org/pdf/2001.11384.pdf).
 
 ## Environment
 
